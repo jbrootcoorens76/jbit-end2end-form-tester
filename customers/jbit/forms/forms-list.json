@@ -72,10 +72,13 @@
         }
       },
       "security_features": {
-        "captcha": false,
+        "captcha": true,
+        "recaptcha": true,
+        "recaptcha_type": "v2_invisible",
         "honeypot": false,
         "csrf_token": true,
-        "rate_limiting": true
+        "rate_limiting": true,
+        "test_bypass_available": true
       },
       "submission": {
         "method": "POST",

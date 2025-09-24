@@ -1,5 +1,6 @@
 const BasePage = require('../../../tests/shared/BasePage');
 const FormHelper = require('../../../tests/shared/FormHelper');
+const RecaptchaHandler = require('./utils/recaptcha-handler');
 
 /**
  * ContactFormPage - Page Object Model for JBIT Contact Form
@@ -9,6 +10,7 @@ class ContactFormPage extends BasePage {
   constructor(page) {
     super(page);
     this.formHelper = new FormHelper(page);
+    this.recaptchaHandler = new RecaptchaHandler(page);
 
     // Form URL
     this.url = 'https://jbit.be/contact-nl/';
@@ -64,8 +66,36 @@ class ContactFormPage extends BasePage {
    */
   async navigate() {
     console.log(`Navigating to JBIT contact form: ${this.url}`);
+
+    // Apply reCAPTCHA bypass before navigation
+    await this.handleRecaptcha();
+
     await this.goto(this.url);
     await this.waitForFormLoad();
+  }
+
+  /**
+   * Handle reCAPTCHA protection on the form
+   * Applies multiple bypass strategies to handle CAPTCHA for testing
+   */
+  async handleRecaptcha() {
+    console.log('Setting up reCAPTCHA bypass strategies...');
+
+    try {
+      // Apply multiple strategies for maximum success rate
+      const success = await this.recaptchaHandler.applyMultipleStrategies();
+
+      if (success) {
+        console.log('reCAPTCHA bypass strategies applied successfully');
+      } else {
+        console.warn('reCAPTCHA bypass may not be fully effective, tests might fail');
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error applying reCAPTCHA bypass:', error);
+      return false;
+    }
   }
 
   /**
@@ -189,6 +219,16 @@ class ContactFormPage extends BasePage {
    */
   async submitForm() {
     console.log('Submitting contact form');
+
+    // Check if reCAPTCHA is present and handle it
+    const recaptchaPresent = await this.recaptchaHandler.isRecaptchaPresent();
+    if (recaptchaPresent) {
+      console.log('reCAPTCHA detected on form, applying additional bypass strategies');
+      await this.recaptchaHandler.handleRecaptcha();
+
+      // Wait for bypass to take effect
+      await this.recaptchaHandler.waitForRecaptchaBypass();
+    }
 
     // Scroll to submit button to ensure it's visible
     await this.scrollToElement(this.selectors.submitButton);

@@ -7,9 +7,14 @@
     "test": "npx playwright test",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
-    "test:jbit": "npx playwright test customers/jbit/tests/",
-    "test:contact": "npx playwright test customers/jbit/tests/contact-form.spec.js",
+    "test:jbit": "node run-jbit-tests.js",
+    "test:jbit:headed": "HEADLESS=false node run-jbit-tests.js --headed",
+    "test:jbit:debug": "node run-jbit-tests.js --debug",
+    "test:jbit:happy": "node run-jbit-tests.js happy-path",
+    "test:jbit:validation": "node run-jbit-tests.js validation",
+    "test:contact": "CUSTOMER=jbit npx playwright test customers/jbit/tests/contact-form.spec.js",
     "report": "npx playwright show-report",
+    "report:jbit": "npx playwright show-report customers/jbit/reports/html-report",
     "install:browsers": "npx playwright install"
   },
   "keywords": [
