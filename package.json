@@ -1,0 +1,36 @@
+{
+  "name": "jbit-end2end-form-tester",
+  "version": "1.0.0",
+  "description": "End-to-end testing suite for JBIT customer forms using Playwright",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:jbit": "npx playwright test customers/jbit/tests/",
+    "test:contact": "npx playwright test customers/jbit/tests/contact-form.spec.js",
+    "report": "npx playwright show-report",
+    "install:browsers": "npx playwright install"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "e2e",
+    "forms",
+    "elementor",
+    "jbit"
+  ],
+  "author": "JBIT Form Testing Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.19.17"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "private"
+  }
+}

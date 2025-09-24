@@ -8,27 +8,27 @@
       "type": "contact",
       "fields": [
         {
-          "name": "naam",
+          "name": "name",
           "type": "text",
           "label": "Naam",
-          "required": true,
-          "selector": "input[name='naam']",
-          "validation": "required"
+          "required": false,
+          "selector": "input[name='form_fields[name]'], #form-field-name",
+          "validation": "optional"
         },
         {
           "name": "email",
           "type": "email",
           "label": "Email",
           "required": true,
-          "selector": "input[name='email']",
+          "selector": "input[name='form_fields[email]'], #form-field-email",
           "validation": "required,email"
         },
         {
-          "name": "telefoon",
+          "name": "phone",
           "type": "tel",
           "label": "Telefoon",
           "required": false,
-          "selector": "input[name='telefoon']",
+          "selector": "input[name='form_fields[phone]'], #form-field-phone",
           "validation": "optional"
         },
         {
@@ -36,7 +36,7 @@
           "type": "checkbox",
           "label": "Interesse",
           "required": false,
-          "selector": "input[name='interesse[]']",
+          "selector": "input[name='form_fields[field_a3f7052][]']",
           "options": [
             "Process Integratie en Automatisatie",
             "Advies op maat",
@@ -46,29 +46,29 @@
           "validation": "optional"
         },
         {
-          "name": "bericht",
+          "name": "message",
           "type": "textarea",
           "label": "Bericht",
-          "required": true,
-          "selector": "textarea[name='bericht']",
-          "validation": "required"
+          "required": false,
+          "selector": "textarea[name='form_fields[message]'], #form-field-message",
+          "validation": "optional"
         }
       ],
       "submit_button": {
-        "selector": "button[type='submit'], input[type='submit']",
+        "selector": "button.elementor-button[type='submit'], button:has-text('Send')",
         "text": "Send"
       },
       "messages": {
         "success": {
-          "selector": ".elementor-message-success, .success-message, .form-success",
+          "selector": ".elementor-message-success, .success-message, .form-success, .elementor-form .elementor-message",
           "expected_text": "Bedankt voor uw bericht"
         },
         "error": {
-          "selector": ".elementor-message-danger, .error-message, .form-error",
+          "selector": ".elementor-message-danger, .error-message, .form-error, .elementor-form .elementor-message",
           "expected_text": "Er is een fout opgetreden"
         },
         "field_errors": {
-          "selector": ".elementor-field-error, .field-error, .error"
+          "selector": ".elementor-field-error, .field-error, .error, .elementor-field-required"
         }
       },
       "security_features": {

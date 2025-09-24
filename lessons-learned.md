@@ -28,6 +28,29 @@ This document captures issues encountered, solutions found, and improvements mad
 
 ---
 
+## Issues Encountered
+
+### Issue: Form Selectors Not Matching Actual Form
+**Date**: 2024-09-24
+**Agent Involved**: wordpress-elementor-specialist
+**Severity**: High
+
+**Problem Description**:
+Tests are failing with timeout errors because `input[name='naam']` selector is not found on the JBIT contact form. The generated selectors from Phase 1 don't match the actual form structure.
+
+**Root Cause**:
+The wordpress-elementor-specialist agent made assumptions about form field names without actually inspecting the live form HTML structure.
+
+**Solution**:
+Need to use playwright-form-tester agent to inspect the actual form and update selectors to match the real form structure.
+
+**Prevention**:
+Agent should use actual DOM inspection rather than assumptions about Elementor form patterns.
+
+**Agent Instructions Updated**: Need to update wordpress-elementor-specialist to inspect actual form HTML.
+
+---
+
 ## Common Issues & Solutions
 
 ### Form Selectors Breaking
