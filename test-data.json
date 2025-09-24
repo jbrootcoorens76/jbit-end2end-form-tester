@@ -1,0 +1,160 @@
+{
+  "test_data_sets": {
+    "valid_data": {
+      "happy_path_basic": {
+        "naam": "Jan van der Berg",
+        "email": "jan.vandenberg@example.com",
+        "telefoon": "+31 6 12345678",
+        "interesse": ["Webdesign"],
+        "bericht": "Ik ben geïnteresseerd in uw webdesign diensten. Kunt u mij meer informatie sturen?"
+      },
+      "happy_path_comprehensive": {
+        "naam": "Maria Jansen",
+        "email": "maria.jansen@bedrijf.nl",
+        "telefoon": "06-87654321",
+        "interesse": ["Process Integratie en Automatisatie", "Advies op maat"],
+        "bericht": "Wij zijn op zoek naar een partner voor proces automatisering en zouden graag advies op maat ontvangen voor ons bedrijf."
+      },
+      "minimal_required": {
+        "naam": "Piet de Vries",
+        "email": "piet@test.com",
+        "telefoon": "",
+        "interesse": [],
+        "bericht": "Korte vraag over jullie diensten."
+      }
+    },
+    "invalid_data": {
+      "empty_required_fields": {
+        "naam": "",
+        "email": "",
+        "telefoon": "+31 6 11111111",
+        "interesse": ["Webdesign"],
+        "bericht": ""
+      },
+      "invalid_email_formats": [
+        {
+          "naam": "Test User",
+          "email": "invalid-email",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht"
+        },
+        {
+          "naam": "Test User",
+          "email": "test@",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht"
+        },
+        {
+          "naam": "Test User",
+          "email": "@domain.com",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht"
+        },
+        {
+          "naam": "Test User",
+          "email": "test@domain",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht"
+        }
+      ],
+      "missing_individual_required": [
+        {
+          "description": "missing_name",
+          "naam": "",
+          "email": "test@example.com",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht zonder naam"
+        },
+        {
+          "description": "missing_email",
+          "naam": "Test User",
+          "email": "",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": "Test bericht zonder email"
+        },
+        {
+          "description": "missing_message",
+          "naam": "Test User",
+          "email": "test@example.com",
+          "telefoon": "",
+          "interesse": [],
+          "bericht": ""
+        }
+      ]
+    },
+    "edge_cases": {
+      "special_characters": {
+        "naam": "José van der Müller-Jansen",
+        "email": "josé.müller@example.com",
+        "telefoon": "+31 (0)6-1234-5678",
+        "interesse": ["Advies op maat"],
+        "bericht": "Vraag over prijs & service (10% korting mogelijk?). Speciale tekens: àáâãäåæçèéêë"
+      },
+      "long_content": {
+        "naam": "Maximilian Alexander von Habsburg-Lothringen",
+        "email": "maximilian.alexander@very-long-domain-name-example.com",
+        "telefoon": "+31 (0)20 123 4567 ext. 890",
+        "interesse": ["Process Integratie en Automatisatie", "Advies op maat", "Webdesign", "Gepersonaliseerde Webhosting"],
+        "bericht": "Dit is een zeer lang bericht om te testen hoe het formulier omgaat met uitgebreide tekst content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium."
+      },
+      "boundary_values": {
+        "naam": "A",
+        "email": "a@b.co",
+        "telefoon": "06",
+        "interesse": ["Webdesign"],
+        "bericht": "X"
+      },
+      "unicode_content": {
+        "naam": "张伟 (Zhang Wei)",
+        "email": "zhang.wei@example.com",
+        "telefoon": "+86 138 0013 8000",
+        "interesse": ["Process Integratie en Automatisatie"],
+        "bericht": "你好！我对您的服务很感兴趣。Здравствуйте! Меня интересуют ваши услуги. مرحبا! أنا مهتم بخدماتكم."
+      }
+    },
+    "phone_number_variations": [
+      "+31 6 12345678",
+      "06-12345678",
+      "06 12345678",
+      "0031612345678",
+      "+31(0)612345678",
+      "31612345678"
+    ],
+    "valid_email_formats": [
+      "test@example.com",
+      "user.name@domain.co.uk",
+      "user+tag@example.org",
+      "firstname.lastname@company.business",
+      "user123@test-domain.com",
+      "a@b.co"
+    ],
+    "interest_combinations": [
+      [],
+      ["Process Integratie en Automatisatie"],
+      ["Advies op maat", "Webdesign"],
+      ["Process Integratie en Automatisatie", "Advies op maat", "Webdesign"],
+      ["Process Integratie en Automatisatie", "Advies op maat", "Webdesign", "Gepersonaliseerde Webhosting"]
+    ]
+  },
+  "expected_error_messages": {
+    "nl": {
+      "required_field": "Dit veld is verplicht",
+      "invalid_email": "Voer een geldig emailadres in",
+      "form_submission_error": "Er is een fout opgetreden bij het verzenden",
+      "success_message": "Bedankt voor uw bericht. Wij nemen zo spoedig mogelijk contact met u op."
+    }
+  },
+  "form_states": {
+    "initial": "Form loaded and ready for input",
+    "validation_error": "Form showing validation errors",
+    "submitting": "Form submission in progress",
+    "success": "Form submitted successfully",
+    "server_error": "Server error during submission"
+  }
+}

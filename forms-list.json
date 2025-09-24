@@ -1,0 +1,94 @@
+{
+  "forms": [
+    {
+      "id": "jbit-contact-form",
+      "url": "https://jbit.be/contact-nl/",
+      "purpose": "Contact form for JBIT services inquiry",
+      "language": "nl",
+      "type": "contact",
+      "fields": [
+        {
+          "name": "naam",
+          "type": "text",
+          "label": "Naam",
+          "required": true,
+          "selector": "input[name='naam']",
+          "validation": "required"
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "label": "Email",
+          "required": true,
+          "selector": "input[name='email']",
+          "validation": "required,email"
+        },
+        {
+          "name": "telefoon",
+          "type": "tel",
+          "label": "Telefoon",
+          "required": false,
+          "selector": "input[name='telefoon']",
+          "validation": "optional"
+        },
+        {
+          "name": "interesse",
+          "type": "checkbox",
+          "label": "Interesse",
+          "required": false,
+          "selector": "input[name='interesse[]']",
+          "options": [
+            "Process Integratie en Automatisatie",
+            "Advies op maat",
+            "Webdesign",
+            "Gepersonaliseerde Webhosting"
+          ],
+          "validation": "optional"
+        },
+        {
+          "name": "bericht",
+          "type": "textarea",
+          "label": "Bericht",
+          "required": true,
+          "selector": "textarea[name='bericht']",
+          "validation": "required"
+        }
+      ],
+      "submit_button": {
+        "selector": "button[type='submit'], input[type='submit']",
+        "text": "Send"
+      },
+      "messages": {
+        "success": {
+          "selector": ".elementor-message-success, .success-message, .form-success",
+          "expected_text": "Bedankt voor uw bericht"
+        },
+        "error": {
+          "selector": ".elementor-message-danger, .error-message, .form-error",
+          "expected_text": "Er is een fout opgetreden"
+        },
+        "field_errors": {
+          "selector": ".elementor-field-error, .field-error, .error"
+        }
+      },
+      "security_features": {
+        "captcha": false,
+        "honeypot": false,
+        "csrf_token": true,
+        "rate_limiting": true
+      },
+      "submission": {
+        "method": "POST",
+        "ajax": true,
+        "endpoint": "https://jbit.be/wp-admin/admin-ajax.php",
+        "action": "elementor_pro_forms"
+      },
+      "special_features": {
+        "multi_step": false,
+        "conditional_logic": false,
+        "file_upload": false,
+        "progress_bar": false
+      }
+    }
+  ]
+}
