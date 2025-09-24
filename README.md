@@ -45,12 +45,26 @@ Follow `simplified-implementation-plan.md`:
 - `agent-roles.md` - Detailed agent specifications
 - `lessons-learned.md` - Issues and solutions log
 
+## Project Structure
+
+Organized by customer for scalability:
+```
+customers/
+├── jbit/              # JBIT company forms and tests
+│   ├── forms/         # Form specifications
+│   ├── tests/         # Customer-specific tests
+│   ├── data/          # Test data
+│   └── reports/       # Test results
+└── {customer-name}/   # Additional customers...
+```
+
 ## Getting Started
 
-1. Provide your form URLs to the `wordpress-elementor-specialist` agent
-2. Let the agents execute the 3-phase implementation plan
-3. Review and approve at each checkpoint
-4. Your forms will be tested automatically daily
+1. **Create customer directory**: `customers/{customer-name}/`
+2. **Provide form URLs** to the `wordpress-elementor-specialist` agent
+3. **Let agents execute** the 3-phase implementation plan
+4. **Review and approve** at each checkpoint
+5. **Tests run automatically** daily per customer
 
 ## Support
 

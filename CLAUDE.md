@@ -191,6 +191,13 @@ Only work directly when:
 3. **Update agent instructions** if the same issue repeats
 4. **Commit learnings** to the GitHub repository for future reference
 
+### Project Structure
+- **Customer-based organization**: `customers/{customer-name}/`
+- **Shared resources**: `/tests/shared/` and `/tests/utils/`
+- **Documentation**: `/docs/` directory
+- **Agent configurations**: `/.claude/agents/`
+- See `docs/directory-structure.md` for complete structure
+
 ### GitHub Repository Management
 - **Always commit agent outputs** to preserve work
 - **Update lessons-learned.md** when issues are resolved
