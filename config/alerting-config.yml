@@ -1,0 +1,195 @@
+# JBIT Form Testing Alerting Configuration
+# This file contains templates and configuration for various alerting methods
+
+# Email Configuration
+email:
+  # SMTP Settings (configure in GitHub Secrets/Variables)
+  smtp:
+    server: "smtp.gmail.com"  # Default Gmail SMTP
+    port: 587
+    tls: true
+
+  # Email Templates
+  templates:
+    failure:
+      subject: "🚨 JBIT Form Tests Failed - Run #{run_number}"
+      body: |
+        JBIT form tests have failed!
+
+        📊 Test Summary:
+        - Customer: JBIT
+        - Test Type: {test_type}
+        - Failed Tests: {failed_count}
+        - Total Tests: {total_count}
+        - Browser: {browser}
+
+        🔗 Links:
+        - View Results: {workflow_url}
+        - HTML Report: {report_url}
+
+        📅 Details:
+        - Date: {date}
+        - Commit: {commit_sha}
+        - Branch: {branch}
+
+        Please investigate and fix the failing tests.
+
+        ---
+        Automated notification from JBIT Form Testing System
+
+    success_after_failure:
+      subject: "✅ JBIT Form Tests Recovered - Run #{run_number}"
+      body: |
+        Great news! The JBIT form tests are now passing again.
+
+        📊 Test Summary:
+        - All tests: PASSING
+        - Recovery Date: {date}
+        - Previous Failure: {previous_failure_date}
+
+        🔗 View Results: {workflow_url}
+
+# Slack Configuration
+slack:
+  # Webhook URL (set in GitHub Secrets: SLACK_WEBHOOK_URL)
+  webhook_url: "${SLACK_WEBHOOK_URL}"
+
+  # Channel Configuration
+  channels:
+    alerts: "#jbit-alerts"
+    general: "#jbit-general"
+
+  # Message Templates
+  templates:
+    failure:
+      text: |
+        🚨 *JBIT Form Tests Failed*
+
+        *Test Details:*
+        • Customer: JBIT
+        • Browser: {browser}
+        • Failed: {failed_count}/{total_count} tests
+        • Date: {date}
+
+        <{workflow_url}|📊 View Results> | <{report_url}|📋 HTML Report>
+
+      color: "danger"
+
+    success:
+      text: |
+        ✅ *JBIT Form Tests Passed*
+
+        • All tests passing
+        • Browser: {browser}
+        • Date: {date}
+
+        <{report_url}|📋 View Report>
+
+      color: "good"
+
+# Microsoft Teams Configuration
+teams:
+  # Webhook URL (set in GitHub Secrets: TEAMS_WEBHOOK_URL)
+  webhook_url: "${TEAMS_WEBHOOK_URL}"
+
+  templates:
+    failure:
+      title: "JBIT Form Tests Failed"
+      text: |
+        The automated form tests for JBIT have failed.
+
+        **Test Summary:**
+        - Failed Tests: {failed_count}
+        - Total Tests: {total_count}
+        - Browser: {browser}
+        - Date: {date}
+
+        [View Results]({workflow_url}) | [HTML Report]({report_url})
+
+# PagerDuty Configuration (for critical failures)
+pagerduty:
+  # Integration key (set in GitHub Secrets: PAGERDUTY_INTEGRATION_KEY)
+  integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+
+  # Escalation rules
+  escalation:
+    # Create incident if all browsers fail
+    critical_threshold: 100  # Percentage of failed tests
+    # Auto-resolve if tests pass again
+    auto_resolve: true
+
+# Custom Webhook Configuration
+webhook:
+  # Custom webhook URL for integrations
+  url: "${CUSTOM_WEBHOOK_URL}"
+
+  # Payload template
+  payload:
+    customer: "jbit"
+    status: "{status}"  # success, failure, recovery
+    test_summary:
+      total: "{total_count}"
+      passed: "{passed_count}"
+      failed: "{failed_count}"
+      browser: "{browser}"
+    metadata:
+      workflow_url: "{workflow_url}"
+      report_url: "{report_url}"
+      date: "{date}"
+      commit: "{commit_sha}"
+
+# Notification Rules
+rules:
+  # When to send notifications
+  triggers:
+    # Always notify on scheduled runs
+    - event_type: "schedule"
+      notify_on: ["failure", "recovery"]
+
+    # Notify on manual runs if they fail
+    - event_type: "workflow_dispatch"
+      notify_on: ["failure"]
+
+    # Don't spam on push/PR - only critical failures
+    - event_type: "push"
+      notify_on: ["failure"]
+      conditions:
+        - all_browsers_failed: true
+
+    - event_type: "pull_request"
+      notify_on: []  # No notifications for PR runs
+
+  # Rate limiting
+  rate_limit:
+    # Don't send more than X notifications per hour
+    max_per_hour: 3
+    # Group similar failures
+    group_similar: true
+    # Cooldown period between similar alerts (minutes)
+    cooldown: 30
+
+# Environment-specific settings
+environments:
+  production:
+    email:
+      recipients:
+        - "dev-team@jbit.com"
+        - "qa-team@jbit.com"
+    slack:
+      channel: "#jbit-alerts"
+    severity: "high"
+
+  staging:
+    email:
+      recipients:
+        - "dev-team@jbit.com"
+    slack:
+      channel: "#jbit-dev"
+    severity: "medium"
+
+  development:
+    # Minimal alerting for dev environment
+    email:
+      recipients:
+        - "developer@jbit.com"
+    severity: "low"

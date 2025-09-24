@@ -44,6 +44,16 @@ screenshots/
 videos/
 traces/
 
+# Customer-specific reports and artifacts
+customers/*/reports/test-artifacts/
+customers/*/reports/html-report/
+customers/*/reports/*.json
+
+# CI/CD sensitive files
+.env.production
+.env.ci.local
+config/secrets.yml
+
 # Temporary files
 tmp/
 temp/

@@ -1,0 +1,290 @@
+name: JBIT Daily Form Tests
+
+on:
+  # Daily scheduled run at 6 AM UTC
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: false
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - full
+      browser:
+        description: 'Browser to test (leave empty for all)'
+        required: false
+        default: ''
+
+  # Run on push to main branch
+  push:
+    branches: [ main, master ]
+
+  # Run on pull requests
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  # Customer configuration
+  CUSTOMER: jbit
+  # Playwright configuration
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 0
+  # CI environment flag
+  CI: true
+
+jobs:
+  test:
+    name: Run JBIT Form Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Create reports directory
+        run: mkdir -p customers/jbit/reports/html-report
+
+      - name: Run smoke tests
+        if: github.event.inputs.test_type != 'full'
+        run: |
+          if [ -n "${{ github.event.inputs.browser }}" ]; then
+            npx playwright test customers/jbit/tests/simple-smoke-test.spec.js --project=${{ github.event.inputs.browser }}
+          elif [ "${{ matrix.browser }}" != "" ]; then
+            npx playwright test customers/jbit/tests/simple-smoke-test.spec.js --project=${{ matrix.browser }}
+          else
+            npm run test:smoke
+          fi
+        env:
+          CUSTOMER: jbit
+
+      - name: Run full test suite
+        if: github.event.inputs.test_type == 'full'
+        run: |
+          if [ -n "${{ github.event.inputs.browser }}" ]; then
+            npx playwright test customers/jbit/tests/ --project=${{ github.event.inputs.browser }}
+          elif [ "${{ matrix.browser }}" != "" ]; then
+            npx playwright test customers/jbit/tests/ --project=${{ matrix.browser }}
+          else
+            npm run test:jbit
+          fi
+        env:
+          CUSTOMER: jbit
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: |
+            customers/jbit/reports/
+            test-results/
+          retention-days: 7
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-${{ matrix.browser }}
+          path: customers/jbit/reports/html-report/
+          retention-days: 7
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "# JBIT Test Results - ${{ matrix.browser }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "customers/jbit/reports/test-results.json" ]; then
+            TOTAL=$(node -e "
+              const results = require('./customers/jbit/reports/test-results.json');
+              const stats = results.stats || {};
+              console.log(stats.expected + stats.unexpected + stats.flaky + stats.skipped || 0);
+            ")
+
+            PASSED=$(node -e "
+              const results = require('./customers/jbit/reports/test-results.json');
+              const stats = results.stats || {};
+              console.log(stats.expected || 0);
+            ")
+
+            FAILED=$(node -e "
+              const results = require('./customers/jbit/reports/test-results.json');
+              const stats = results.stats || {};
+              console.log(stats.unexpected || 0);
+            ")
+
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+            echo "| Browser | ${{ matrix.browser }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Total Tests | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
+            echo "| Test Date | $(date) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Test results file not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: test
+    if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: Send Email Notification
+        if: vars.NOTIFICATION_EMAIL
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          server_port: ${{ vars.SMTP_PORT || '587' }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "🚨 JBIT Form Tests Failed - ${{ github.run_number }}"
+          to: ${{ vars.NOTIFICATION_EMAIL }}
+          from: ${{ vars.FROM_EMAIL || secrets.SMTP_USERNAME }}
+          body: |
+            JBIT form tests have failed!
+
+            Run Details:
+            - Workflow: ${{ github.workflow }}
+            - Run ID: ${{ github.run_id }}
+            - Branch: ${{ github.ref }}
+            - Commit: ${{ github.sha }}
+            - Date: ${{ github.event.head_commit.timestamp }}
+
+            View the full results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Please investigate and fix the failing tests.
+
+      - name: Send Slack Notification
+        if: vars.SLACK_WEBHOOK_URL
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          text: |
+            🚨 JBIT Form Tests Failed!
+
+            Workflow: ${{ github.workflow }}
+            Run: ${{ github.run_number }}
+
+            View Results: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  deploy-reports:
+    name: Deploy Reports to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: test
+    if: always() && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Prepare reports for deployment
+        run: |
+          mkdir -p public/reports
+
+          # Copy HTML reports
+          if [ -d "artifacts" ]; then
+            for browser_dir in artifacts/html-report-*; do
+              if [ -d "$browser_dir" ]; then
+                browser_name=$(basename "$browser_dir" | sed 's/html-report-//')
+                cp -r "$browser_dir"/* "public/reports/$browser_name/" 2>/dev/null || true
+              fi
+            done
+          fi
+
+          # Create index page
+          cat > public/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>JBIT Form Test Reports</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .header { text-align: center; margin-bottom: 40px; }
+              .browser-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+              .browser-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; }
+              .browser-card h3 { margin-top: 0; color: #333; }
+              .btn { display: inline-block; padding: 10px 20px; background: #007cba; color: white; text-decoration: none; border-radius: 4px; }
+              .btn:hover { background: #005a87; }
+              .timestamp { color: #666; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>JBIT Form Test Reports</h1>
+              <p class="timestamp">Generated: $(date)</p>
+            </div>
+
+            <div class="browser-grid">
+              <div class="browser-card">
+                <h3>🌐 Chromium Tests</h3>
+                <p>Desktop Chrome browser testing results</p>
+                <a href="reports/chromium/" class="btn">View Report</a>
+              </div>
+
+              <div class="browser-card">
+                <h3>🦊 Firefox Tests</h3>
+                <p>Firefox browser testing results</p>
+                <a href="reports/firefox/" class="btn">View Report</a>
+              </div>
+
+              <div class="browser-card">
+                <h3>🧭 WebKit Tests</h3>
+                <p>Safari WebKit testing results</p>
+                <a href="reports/webkit/" class="btn">View Report</a>
+              </div>
+            </div>
+
+            <div style="margin-top: 40px; text-align: center; color: #666;">
+              <p>Last updated: $(date) | <a href="${{ github.server_url }}/${{ github.repository }}">View Repository</a></p>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
