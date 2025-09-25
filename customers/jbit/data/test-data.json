@@ -5,8 +5,8 @@
         "name": "Jan van der Berg",
         "naam": "Jan van der Berg",
         "email": "jan.vandenberg@example.com",
-        "phone": "+31 6 12345678",
-        "telefoon": "+31 6 12345678",
+        "phone": "+31612345678",
+        "telefoon": "+31612345678",
         "interesse": ["Webdesign"],
         "message": "Ik ben geïnteresseerd in uw webdesign diensten. Kunt u mij meer informatie sturen?",
         "bericht": "Ik ben geïnteresseerd in uw webdesign diensten. Kunt u mij meer informatie sturen?"
@@ -37,8 +37,8 @@
         "name": "",
         "naam": "",
         "email": "",
-        "phone": "+31 6 11111111",
-        "telefoon": "+31 6 11111111",
+        "phone": "+31611111111",
+        "telefoon": "+31611111111",
         "interesse": ["Webdesign"],
         "message": "",
         "bericht": ""

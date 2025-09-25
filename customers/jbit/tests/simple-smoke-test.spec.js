@@ -85,23 +85,135 @@ test.describe('JBIT Contact Form - Simple Smoke Test', () => {
       await expect(submitButton).toBeEnabled();
 
       console.log('Submit button found and ready, submitting form...');
+
+      // Take screenshot before submission
+      await page.screenshot({ path: './form-filled.png', fullPage: true });
+      console.log('Screenshot taken: form filled');
+
       await submitButton.click();
 
       // Wait for some response (either success or error)
       await page.waitForTimeout(3000);
 
-      console.log('Form submitted successfully - no crashes detected');
+      // Take screenshot after submission
+      await page.screenshot({ path: './form-submitted.png', fullPage: true });
+      console.log('Screenshot taken: form submitted');
 
-      // Simple success criteria:
-      // 1. Page didn't crash/error out
-      // 2. We're still on a valid page
-      // 3. No JavaScript errors in console
+      // Wait for form submission to complete - give it time to process
+      console.log('Waiting for form submission response...');
+      await page.waitForTimeout(5000); // Wait longer for server response
 
+      // Take another screenshot to see the final state
+      await page.screenshot({ path: './form-final-state.png', fullPage: true });
+      console.log('Screenshot taken: final state');
+
+      // Check for actual success indicators first
+      console.log('Checking for success indicators...');
+
+      // Look for success messages in multiple languages
+      const successMessages = [
+        'text="Bedankt voor je bericht"', // Dutch: Thanks for your message
+        'text="Uw bericht is verzonden"', // Dutch: Your message has been sent
+        'text="Thank you for your message"', // English
+        'text="Your message has been sent"', // English
+        'text="Message sent successfully"', // English
+        '.elementor-message-success', // Elementor success message class
+        '.elementor-form-success', // Elementor form success class
+        '[data-success="true"]', // Data attribute for success
+        'text="Merci pour votre message"' // French
+      ];
+
+      let hasSuccessMessage = false;
+      for (const selector of successMessages) {
+        const element = page.locator(selector);
+        if (await element.isVisible()) {
+          console.log(`✅ Success message found: ${selector}`);
+          hasSuccessMessage = true;
+          break;
+        }
+      }
+
+      // Check for error messages that indicate submission failure
+      console.log('Checking for error messages...');
+      const errorMessages = [
+        'text="Please verify that you are human"',
+        'text="Your submission failed because of an error"',
+        'text="Er is een fout opgetreden"', // Dutch: An error occurred
+        'text="Verzending mislukt"', // Dutch: Submission failed
+        '.elementor-message-danger', // Elementor error message class
+        '.elementor-message-error', // Elementor error message class
+        '.elementor-form-error', // Elementor form error class
+        '[data-error="true"]' // Data attribute for error
+      ];
+
+      let hasErrorMessage = false;
+      let errorFound = '';
+      for (const selector of errorMessages) {
+        const element = page.locator(selector);
+        if (await element.isVisible()) {
+          hasErrorMessage = true;
+          errorFound = selector;
+          console.log(`❌ Error message found: ${selector}`);
+          break;
+        }
+      }
+
+      // Check if form fields are cleared (indicates successful submission)
+      // But only if we're still on the contact form page
+      let fieldsCleared = false;
       const currentUrl = page.url();
-      expect(currentUrl).toBeTruthy();
-      console.log(`Current URL after submission: ${currentUrl}`);
+      const stillOnContactForm = currentUrl.includes('/contact-nl/');
 
-      // Check that we're still on a valid JBIT page (either same page or thank you page)
+      if (stillOnContactForm) {
+        try {
+          const nameFieldValue = await page.locator('input[name*="naam"], input[name*="name"]').first().inputValue({ timeout: 2000 });
+          const emailFieldValue = await page.locator('input[name*="email"]').first().inputValue({ timeout: 2000 });
+          const messageFieldValue = await page.locator('textarea[name*="bericht"], textarea[name*="message"]').first().inputValue({ timeout: 2000 });
+
+          fieldsCleared = !nameFieldValue && !emailFieldValue && !messageFieldValue;
+          console.log(`Form fields cleared: ${fieldsCleared}`);
+          console.log(`Name field value: "${nameFieldValue}"`);
+          console.log(`Email field value: "${emailFieldValue}"`);
+          console.log(`Message field value: "${messageFieldValue}"`);
+        } catch (error) {
+          console.log('Could not check form fields (likely redirected to success page)');
+          fieldsCleared = false; // We'll rely on URL change detection
+        }
+      } else {
+        console.log('Not on contact form page anymore - likely successful redirect');
+        fieldsCleared = false; // We'll rely on URL change detection
+      }
+
+      // Check for URL change (redirect to thank you page)
+      const urlChanged = !currentUrl.includes('/contact-nl/');
+      console.log(`Current URL: ${currentUrl}`);
+      console.log(`URL changed from contact form: ${urlChanged}`);
+
+      // Determine if submission was actually successful
+      const submissionSuccessful = hasSuccessMessage || (fieldsCleared && !hasErrorMessage) || urlChanged;
+
+      console.log('\n=== SUBMISSION ANALYSIS ===');
+      console.log(`Success message found: ${hasSuccessMessage}`);
+      console.log(`Error message found: ${hasErrorMessage} (${errorFound})`);
+      console.log(`Form fields cleared: ${fieldsCleared}`);
+      console.log(`URL changed: ${urlChanged}`);
+      console.log(`Overall success: ${submissionSuccessful}`);
+      console.log('========================\n');
+
+      // Fail the test if we have clear error indicators
+      if (hasErrorMessage) {
+        throw new Error(`❌ Form submission failed - Error message detected: ${errorFound}`);
+      }
+
+      // Require at least one positive success indicator
+      if (!submissionSuccessful) {
+        throw new Error('❌ Form submission unclear - No clear success indicators found (no success message, fields not cleared, no redirect)');
+      }
+
+      console.log('✅ Form submission appears successful based on indicators');
+
+      // Additional validation
+      expect(currentUrl).toBeTruthy();
       expect(currentUrl).toMatch(/jbit\.be/);
 
       console.log('✅ Smoke test passed - form submission completed without errors');

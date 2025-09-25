@@ -8,6 +8,23 @@ This is a **simplified functional testing project** for Elementor forms using Pl
 
 **Key Principle: ALWAYS USE AGENTS FIRST** - For any task, try using the available specialized agents before doing work directly.
 
+## ✅ Project Status: OPERATIONAL
+
+The E2E testing framework is **successfully configured and working**:
+- ✅ **Form Testing**: Successfully submits forms and detects successful redirects
+- ✅ **Cloudflare Turnstile Bypass**: Working with proper user agent + IP whitelisting
+- ✅ **Customer Organization**: Tests organized by customer in `customers/{customer}/` structure
+- ✅ **Docker Infrastructure**: Ready for CI/CD deployment
+- ✅ **Test Validation**: Comprehensive success/failure detection with screenshots
+
+**Current Configuration**:
+- Customer: JBIT (`customers/jbit/`)
+- Form URL: `https://jbit.be/contact-nl/`
+- User Agent: `JBIT-Bot/1.0 (+https://jbit.be/bot)`
+- Status: All tests passing ✅
+
+**⚠️ CRITICAL REQUIREMENT**: Local IP addresses must be whitelisted in both Cloudflare WAF rules AND WordPress Turnstile plugin configuration for tests to work properly.
+
 ## Common Commands
 
 ### Initial Setup (if not already done)
@@ -33,19 +50,22 @@ docker-compose up --abort-on-container-exit
 ### Running Tests Locally
 ```bash
 # Run all tests
-npx playwright test
+npm test
+
+# Run specific customer tests
+npm test customers/jbit/tests/simple-smoke-test.spec.js
 
 # Run tests in headed mode (see browser)
 npx playwright test --headed
-
-# Run specific test file
-npx playwright test tests/elementor-form.spec.js
 
 # Run tests with debugging
 npx playwright test --debug
 
 # Generate test report
 npx playwright show-report
+
+# View test results and artifacts
+ls customers/jbit/reports/test-artifacts/
 ```
 
 ### Development Commands

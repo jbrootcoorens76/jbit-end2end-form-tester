@@ -58,17 +58,20 @@ module.exports = defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
-    /* Take screenshot on failure */
-    screenshot: 'only-on-failure',
+    /* Take screenshot on failure and success */
+    screenshot: 'on',
 
-    /* Record video on failure */
-    video: 'retain-on-failure',
+    /* Record video for all tests */
+    video: 'on',
 
     /* Default timeout for actions */
     actionTimeout: 10000,
 
     /* Default timeout for navigation */
-    navigationTimeout: 30000
+    navigationTimeout: 30000,
+
+    /* Custom user agent for Turnstile whitelisting - trying bot-like format */
+    userAgent: 'JBIT-Bot/1.0 (+https://jbit.be/bot)'
   },
 
   /* Configure projects for major browsers */

@@ -23,6 +23,30 @@ The workflow is automatically configured in `.github/workflows/jbit-tests.yml`. 
 
 ### 2. Docker Setup
 
+**⚠️ Docker Installation Required**
+
+Before running Docker-based tests, ensure Docker Desktop is installed:
+
+**macOS Installation:**
+```bash
+# Option 1: Download from https://docker.com/products/docker-desktop
+# Option 2: Using Homebrew (requires admin rights)
+brew install --cask docker
+
+# Start Docker Desktop application
+open -a Docker
+```
+
+**Verify Installation:**
+```bash
+# Check Docker is running
+docker --version
+docker-compose --version
+
+# Test Docker connectivity
+docker info
+```
+
 #### Local Testing
 ```bash
 # Build and run smoke tests

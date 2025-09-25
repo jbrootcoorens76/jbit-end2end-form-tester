@@ -92,6 +92,55 @@ Always check for and document anti-bot protection during form analysis phase.
 
 **Agent Instructions Updated**: Yes - updated to automatically detect and handle reCAPTCHA protection.
 
+### Issue: Cloudflare Turnstile Bypassed Tests (User Agent + IP Whitelisting)
+**Date**: 2025-09-25
+**Agent Involved**: playwright-form-tester
+**Severity**: Critical
+
+**Problem Description**:
+After implementing reCAPTCHA bypass, discovered that JBIT site uses Cloudflare Turnstile (not Google reCAPTCHA). Tests were still failing with "Please verify that you are human" and "Your submission failed because of an error" messages despite multiple bypass attempts.
+
+**Root Cause**:
+1. Initial assumption was Google reCAPTCHA, but site actually uses Cloudflare Turnstile
+2. User agent whitelisting alone was insufficient
+3. Local development IP addresses also needed to be whitelisted in both Cloudflare WAF and WordPress Turnstile plugin
+
+**Solution**:
+Implemented comprehensive Cloudflare Turnstile configuration:
+1. **User Agent Whitelisting**: `JBIT-Bot/1.0 (+https://jbit.be/bot)` in Cloudflare WAF rules
+2. **IP Address Whitelisting**: Added local development IPs to both Cloudflare WAF rules AND WordPress Turnstile plugin settings
+3. **Enhanced Bypass Scripts**: Updated bypass handler with Turnstile-specific patterns and mocking
+4. **Test Validation Logic**: Improved success detection to recognize successful form redirects
+
+**Prevention**:
+1. Always identify the specific CAPTCHA system during form analysis (Turnstile vs reCAPTCHA vs hCaptcha)
+2. Document that BOTH user agent AND IP whitelisting are typically required for Cloudflare Turnstile
+3. Test whitelist configuration changes after deployment (may take 5-30 minutes to propagate)
+
+**Agent Instructions Updated**: Yes - updated playwright-form-tester to handle Turnstile specifically and wordpress-elementor-specialist to identify CAPTCHA type correctly.
+
+### Issue: False Test Results - Successful Form Submission Detected as Failure
+**Date**: 2025-09-25
+**Agent Involved**: playwright-form-tester
+**Severity**: High
+
+**Problem Description**:
+After Turnstile whitelist was properly configured, form submissions were succeeding (redirecting to homepage) but tests were failing with timeout errors when trying to check form field values on the redirected page.
+
+**Root Cause**:
+Test validation logic was trying to check form fields after successful form submission that redirected to a different page (JBIT homepage). Form fields no longer existed on the success page.
+
+**Solution**:
+1. **Smart URL Detection**: Check if still on contact form page before attempting to read form fields
+2. **Redirect Recognition**: Recognize URL changes as success indicators
+3. **Timeout Handling**: Add shorter timeouts with error handling for field checks
+4. **Multiple Success Criteria**: Use URL redirect as primary success indicator alongside form field clearing
+
+**Prevention**:
+Always design tests to handle successful form redirects and page changes as success indicators, not failures.
+
+**Agent Instructions Updated**: Yes - updated test validation logic to properly handle successful form submissions with redirects.
+
 ---
 
 ## Common Issues & Solutions

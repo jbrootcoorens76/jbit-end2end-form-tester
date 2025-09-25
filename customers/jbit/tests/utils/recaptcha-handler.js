@@ -13,7 +13,8 @@ class RecaptchaHandler {
       MOCK_RESPONSE: 'mock_response',
       INTERCEPT_NETWORK: 'intercept_network',
       ENVIRONMENT_BYPASS: 'environment_bypass',
-      DIRECT_API: 'direct_api'
+      DIRECT_API: 'direct_api',
+      TURNSTILE_BYPASS: 'turnstile_bypass'
     };
   }
 
@@ -22,7 +23,7 @@ class RecaptchaHandler {
    * @param {string} strategy - Strategy to use for bypassing reCAPTCHA
    * @returns {Promise<boolean>} - True if handled successfully
    */
-  async handleRecaptcha(strategy = this.strategies.INTERCEPT_NETWORK) {
+  async handleRecaptcha(strategy = this.strategies.TURNSTILE_BYPASS) {
     console.log(`Attempting reCAPTCHA bypass using strategy: ${strategy}`);
 
     try {
@@ -37,6 +38,8 @@ class RecaptchaHandler {
           return await this.environmentBypass();
         case this.strategies.DIRECT_API:
           return await this.directApiSubmission();
+        case this.strategies.TURNSTILE_BYPASS:
+          return await this.bypassTurnstile();
         default:
           console.warn(`Unknown strategy: ${strategy}. Using default intercept method.`);
           return await this.interceptRecaptchaRequests();
@@ -310,6 +313,7 @@ class RecaptchaHandler {
    */
   async applyMultipleStrategies() {
     const strategies = [
+      this.strategies.TURNSTILE_BYPASS,
       this.strategies.INTERCEPT_NETWORK,
       this.strategies.MOCK_RESPONSE,
       this.strategies.DISABLE_SCRIPTS,
@@ -333,6 +337,117 @@ class RecaptchaHandler {
 
     console.error('All reCAPTCHA bypass strategies failed');
     return false;
+  }
+
+  /**
+   * Strategy 6: Cloudflare Turnstile Bypass
+   * Handles Cloudflare Turnstile CAPTCHA protection
+   */
+  async bypassTurnstile() {
+    console.log('Setting up Enhanced Cloudflare Turnstile bypass...');
+
+    try {
+      // Block ALL Cloudflare and Turnstile related requests
+      const turnstilePatterns = [
+        '**/*challenges.cloudflare.com*',
+        '**/*cf-turnstile*',
+        '**/*turnstile*',
+        '**/*cloudflareinsights*',
+        '**/*cloudflare.com/cdn-cgi*',
+        '**/*cdnjs.cloudflare.com/ajax/libs/turnstile*'
+      ];
+
+      for (const pattern of turnstilePatterns) {
+        await this.page.route(pattern, route => {
+          console.log('Blocking Turnstile/Cloudflare:', route.request().url());
+          route.abort();
+        });
+      }
+
+      // Set aggressive user agent and headers bypass
+      await this.page.setExtraHTTPHeaders({
+        'CF-RAY': 'mocked-cf-ray',
+        'CF-IPCountry': 'BE',
+        'CF-Visitor': '{"scheme":"https"}',
+        'X-Forwarded-For': '127.0.0.1',
+        'X-Forwarded-Proto': 'https'
+      });
+
+      // Enhanced Turnstile mocking with multiple fallback strategies
+      await this.page.addInitScript(() => {
+        // Completely disable Turnstile before it loads
+        Object.defineProperty(window, 'turnstile', {
+          value: {
+            render: () => {
+              console.log('Turnstile render intercepted and mocked');
+              return 'mock-widget-' + Date.now();
+            },
+            getResponse: () => {
+              console.log('Turnstile getResponse intercepted and mocked');
+              return 'MOCK.TURNSTILE.RESPONSE.' + Date.now();
+            },
+            reset: () => console.log('Turnstile reset mocked'),
+            remove: () => console.log('Turnstile remove mocked'),
+            ready: (callback) => {
+              if (callback) setTimeout(callback, 10);
+            }
+          },
+          writable: false,
+          configurable: false
+        });
+
+        // Mock Cloudflare challenge bypassed flag
+        window.__CF = {
+          challenge_passed: true,
+          turnstile_bypassed: true
+        };
+
+        // Mock any callback functions
+        ['onTurnstileCallback', 'turnstileCallback', 'cfCallback'].forEach(callbackName => {
+          if (window[callbackName]) {
+            setTimeout(() => window[callbackName]('MOCK.RESPONSE.' + Date.now()), 50);
+          }
+        });
+      });
+
+      // Inject script to handle Turnstile widgets after page load
+      await this.page.addInitScript(() => {
+        // Handle Turnstile widgets that might be rendered
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === 1) {
+                // Look for Turnstile containers
+                const turnstileContainers = node.querySelectorAll
+                  ? node.querySelectorAll('[data-sitekey], .cf-turnstile, iframe[src*="cloudflare"]')
+                  : [];
+
+                turnstileContainers.forEach((container) => {
+                  console.log('Found Turnstile container, hiding it');
+                  container.style.display = 'none';
+
+                  // Create hidden input with mock response
+                  const hiddenInput = document.createElement('input');
+                  hiddenInput.type = 'hidden';
+                  hiddenInput.name = 'cf-turnstile-response';
+                  hiddenInput.value = 'mocked-turnstile-response';
+                  container.parentNode.insertBefore(hiddenInput, container);
+                });
+              }
+            });
+          });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+
+      console.log('Turnstile bypass configured successfully');
+      return true;
+
+    } catch (error) {
+      console.error('Turnstile bypass failed:', error);
+      return false;
+    }
   }
 }
 
